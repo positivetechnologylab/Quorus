@@ -1,0 +1,9 @@
+__pycache__
+.env
+src/quorus.egg-info
+*venv
+tmpdir
+pip-cache-dir
+data_logs*
+load_mnist_digits_X.pkl
+load_mnist_digits_y.pkl

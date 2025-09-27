@@ -1,0 +1,121 @@
+{
+  // === High-level experiment sweep ===
+  // Over all of the below high-level configurations, the code will iterate over them to run the experiments.
+  "dataset_types": ["Fashion-MNIST"], // list of datasets to iterate over
+  "ansatz_types_list": [
+    // For each experiment, map client_type -> list of ansatz strings (one per layer).
+    // Supported: "reversed_staircase", "v_shape", "revstair_vshape"
+    {
+      "10": ["v_shape"],
+      "11": ["v_shape", "v_shape"],
+      "12": ["v_shape", "v_shape", "v_shape"],
+      "13": ["v_shape", "v_shape", "v_shape", "v_shape"],
+      "14": ["v_shape", "v_shape", "v_shape", "v_shape", "v_shape"]
+    }
+  ],
+  "class_types_list": [
+    // One entry per dataset in dataset_types; each entry is a list of class-pairs to run.
+    // Classes may be strings or numbers; they'll be coerced to strings internally.
+    // Element-wise i of this list are the class combinations to use for element i of dataset_types.
+    [
+      ["1", "9"]
+    ]
+  ],
+  "random_seeds": [12, 30, 50, 70, 400],
+
+  // === Client configuration (per client type) ===
+  // Keys may be strings or ints; they’ll be coerced to ints.
+  // Maps strings representing the client type to a configuration dictionary, specifying the percentage of total
+  // data to allocate to the client, the number of clients of that type to use in training, the number of epochs
+  // that clients of that type run locally, and the number of communication rounds for that client type (for our code,
+  // it's recommended just to set the number of communication rounds in total on the largest client, as done below)
+  "client_config_exper_parallel": {
+    "10": {"percentage_data": 0.20, "num_clients": 1, "local_epochs": 1, "communication_rounds": 0},
+    "11": {"percentage_data": 0.20, "num_clients": 1, "local_epochs": 1, "communication_rounds": 0},
+    "12": {"percentage_data": 0.20, "num_clients": 1, "local_epochs": 1, "communication_rounds": 0},
+    "13": {"percentage_data": 0.20, "num_clients": 1, "local_epochs": 1, "communication_rounds": 0},
+    "14": {"percentage_data": 0.20, "num_clients": 1, "local_epochs": 1, "communication_rounds": 2}
+  },
+
+  // Used to build initial-config file paths (string token) and logging, via count_qubits_layers(...)
+  // List of [client_type, num_layers] representing the number of layers 'num_layers' that client type 'client_type' has.
+  "qubits_layers_list": [[10, 2], [11, 4], [12, 6], [13, 8], [14, 10]],
+
+  // === Data & logging ===
+  // Specifies the root folder that the log folder should be generated in.
+  "IMG_PATH": ".",
+  "n_samples_exper": 3640,       // total available samples (train + test)
+  "n_clients_tot": 5,            // used to compute n_train_samples_exper
+  "datapoints_per_cli": 128,     // per-client train datapoints (train total = n_clients_tot * this)
+  "testacc_rd_cutoff": 101,      // compute test accuracy every 10 rounds up to this round
+
+  // === Training hyperparameters ===
+  "local_batch_size": 32,
+  "optim_type": "adam",          // "adam" (others if supported in your lib)
+
+  "lr_gen": 0.004,               // for QGAN generator (or ignored for classifier)
+  "lr_disc": 0.001,              // discriminator / classifier LR
+  "lr_disc_decay": 1.0,          // decay factor applied to lr_disc over time
+  "cont_optim_state": false,     // keep optimizer state across rounds
+
+  "compute_fid": false,          // compute FID (QGAN)
+  "is_qcnn": false,              // experimental QCNN support
+  "amp_embed": false,            // experimental amplitude embedding
+  "shared_pca": true,            // share PCA components across clients
+  "local_pca": true,             // perform local PCA on clients
+  "alt_zeros_init": "",          // "", "posneg", or "random" (experimental init for late layers)
+
+  "multiclassifier_type": "multirun", // "", "multirun", "ancilla_endmeas", "cheating", "tunnel_down"
+  "train_models_parallel": true,
+  "heirarchical_train": false,   // (typo retained from original)
+  "morepers": "aggshared",       // "aggshared" (circular averaging) or "mocked_bcast" (no aggregation)
+  "device": "cpu",
+
+  // === Low-level engine toggles (mirrors your call) ===
+  "agg_strategy": "fedavg_circ", // controls the type of aggregation performed
+  "pool_in": true,
+  "local_lr": 0.01,
+  "shots": 1024,
+  "debug": true,
+  "save_pkl": true,
+  "mask_grads": true,
+  "same_init": true,
+  "feature_skew": 0.0,
+  "label_skew": null,
+  "do_lda": false,
+  "feat_sel_type": "top",
+  "feat_ordering": "same",
+  "custom_debug": true,
+  "generative": false,
+  "use_torch": true,
+  "fed_pca_mocked": true,
+  "targ_data_folder_prefix": "testing_gen_imgs",
+  "gen_data_folder_prefix": "qgan_gen_imgs",
+  "fid_batch_size": null,
+  "gen_betas": [0.5, 0.9],
+  "disc_betas": [0.9, 0.99],
+  "resc_invpca": false,
+  "pennylane_interface": "torch",
+  "opt_layers": null,
+
+  // === qubits_and_layers_to_add_block_params ===
+  // If omitted or null, it will be auto-built based on the number of layers in each client’s ansatz,
+  // repeating the tuple in default_block_param for that many layers.
+  "default_block_param": [10, 2],
+  "qubits_and_layers_to_add_block_params": null,
+
+  // === Previous data / params loading (PKLs) ===
+  // If true, will attempt to load your original PKLs at the default computed locations.
+  // You can override the paths below if needed.
+  "use_prev_data": true,
+  "use_prev_params": true,
+  "prev_data_path_override": null,
+  "prev_params_path_override": null,
+
+  // === Seeding & multiprocessing ===
+  "deterministic_torch": false,
+  "mp_start_method": "spawn",
+
+  // Log Level
+  "log_level": "ERROR"
+}

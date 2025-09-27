@@ -12,7 +12,7 @@ The package can also be adapted adapted by injecting your own functions from `sr
 ## Usage
 1. In your terminal, run `git clone https://github.com/positivetechnologylab/quorus.git` to clone the repository.
 2. Run `cd quorus`.
-3. Create a virtual environment if necessary (our code uses Python 3.12.8), and run `python -m pip install -e .` to install the `quorus` package.
+3. Create a virtual environment if necessary (our code uses Python 3.12.8), and run `python -m pip install -e .` to install the `quorus` package. (Alternatively, you can skip steps 1-3 and run `pip install quorus`).
 4. Run `quorus-exp --config <path_to_config_jsonc>`.
 5. The results will be stored in a generated log folder.
 

@@ -127,65 +127,90 @@ def load_mnist_digits(digits_to_keep, n_samples=2000, dataset_name="mnist"):
 
 # from tensorflow.keras.datasets import cifar10
 
+# import numpy as np
+# from sklearn.datasets import fetch_openml
+# from sklearn.model_selection import train_test_split
+
 def load_cifar10(classes, n_samples=2000):
     """
-    Load the CIFAR-10 dataset, filter by the specified classes,
+    Load the CIFAR-10 dataset (without TensorFlow), filter by the specified classes,
     and return the filtered data and labels.
 
-    Parameters:
-      classes (list): List of classes to keep (either as numeric strings like ["3", "5"]
-                      or as names like ["cat", "dog"]).
-      n_samples (int): Number of samples to return.
+    Parameters
+    ----------
+    classes : list
+        List of classes to keep, either as digit strings like ["3", "5"]
+        or names like ["cat", "dog"] (case-insensitive).
+    n_samples : int, default=2000
+        Number of examples to return (stratified). If >= available, returns all.
 
-    Returns:
-      X (np.array): Normalized and flattened image data.
-      y (np.array): Integer labels remapped according to sorted(selected_classes).
+    Returns
+    -------
+    X : np.ndarray, shape (N, 3072), dtype float32
+        Image data flattened and normalized to [0, 1].
+    y : np.ndarray, shape (N,), dtype int
+        Labels remapped to 0..K-1 in sorted order of selected classes.
     """
-
-    # Load the data from Keras (train and test combined)
-    # NOTE: cifar10 is currently not supported because it requires tensorflow.
-    # You can write your own implementation for cifar10, so long as it has a load_data() method
-    # that returns the data of interest.
-    (X_train, y_train), (X_test, y_test) = cifar10.load_data()
-    X = np.concatenate([X_train, X_test], axis=0)
-    y = np.concatenate([y_train, y_test], axis=0).flatten()
-
     # CIFAR-10 standard class names mapping
-    cifar10_classes = {
-        0: "airplane", 1: "automobile", 2: "bird", 3: "cat", 4: "deer",
-        5: "dog", 6: "frog", 7: "horse", 8: "ship", 9: "truck"
+    _CIFAR10_ID_TO_NAME = {
+        0: "airplane",
+        1: "automobile",
+        2: "bird",
+        3: "cat",
+        4: "deer",
+        5: "dog",
+        6: "frog",
+        7: "horse",
+        8: "ship",
+        9: "truck",
     }
+    # --- 1) Load CIFAR-10 from OpenML (no TensorFlow) ---
+    # OpenML dataset name for CIFAR-10; returns 32x32x3 images flattened to 3072 features
+    cifar = fetch_openml("CIFAR_10", version=1, as_frame=False)
+    X = cifar.data          # shape (60000, 3072)
+    y = cifar.target        # string labels "0".."9" or class names, depending on version
 
-    # Determine if classes are specified as digit strings or names.
+    # Coerce y to integer class IDs 0..9
     try:
-        if classes and classes[0].isdigit():
-            selected_indices = [int(c) for c in classes]
+        y_int = y.astype(int)
+    except ValueError:
+        # If labels are names, map them via CIFAR-10 mapping
+        name_to_id = {name.lower(): idx for idx, name in _CIFAR10_ID_TO_NAME.items()}
+        y_int = np.array([name_to_id[str(lbl).lower()] for lbl in y], dtype=int)
+
+    # --- 2) Interpret `classes` argument (ids or names) ---
+    try:
+        if classes and isinstance(classes[0], str) and classes[0].isdigit():
+            # e.g. ["3", "5"]
+            selected_ids = [int(c) for c in classes]
         else:
-            # Normalize to lower case for comparison
-            reverse_mapping = {v.lower(): k for k, v in cifar10_classes.items()}
-            selected_indices = [reverse_mapping[c.lower()] for c in classes]
+            # e.g. ["cat", "dog"]; normalize to lower case
+            name_to_id = {name.lower(): idx for idx, name in _CIFAR10_ID_TO_NAME.items()}
+            selected_ids = [name_to_id[str(c).lower()] for c in classes]
     except Exception as e:
-        print_cust("Error processing classes for CIFAR-10: ", e)
-        raise e
+        print_cust("Error processing CIFAR-10 classes:", e)
+        raise
 
-    mask = np.isin(y, selected_indices)
-    X, y = X[mask], y[mask]
+    selected_ids = sorted(set(selected_ids))
 
-    # Create a mapping similar to load_mnist_digits, ensuring ordering is consistent.
-    mapping = {val: idx for idx, val in enumerate(sorted(selected_indices))}
+    # --- 3) Filter to selected classes ---
+    mask = np.isin(y_int, selected_ids)
+    X = X[mask]
+    y_int = y_int[mask]
 
-    def to_int(x):
-        # If x is a PyTorch tensor, use .item() to extract the value.
-        return int(x.item()) if hasattr(x, "item") else int(x)
+    # --- 4) Remap labels to 0..K-1 in sorted order of selected classes ---
+    mapping = {orig_id: new_id for new_id, orig_id in enumerate(selected_ids)}
+    y = np.array([mapping[int(lbl)] for lbl in y_int], dtype=int)
 
-    # Convert each element in y to a standard integer before mapping.
-    y = np.array([mapping[to_int(val)] for val in y])
-
-    # Normalize to [0, 1] and flatten the images.
+    # --- 5) Normalize to [0, 1] and flatten (OpenML already gives 3072-d vectors) ---
     X = X.astype("float32") / 255.0
+    # If needed, ensure shape (N, 3072)
     X = X.reshape(X.shape[0], -1)
 
-    # If needed, subsample the dataset via stratified sampling.
+    # --- 6) Optional stratified subsample ---
     if n_samples < len(y):
-        X, _, y, _ = train_test_split(X, y, train_size=n_samples, stratify=y, random_state=42)
+        X, _, y, _ = train_test_split(
+            X, y, train_size=n_samples, stratify=y, random_state=42
+        )
+
     return X, y

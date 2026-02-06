@@ -60,7 +60,8 @@ def train_step_classifier(classifier_model, opt_classifier, criterion, real_labe
     outD_real = classifier_model(real_data.detach())
     if len(outD_real.shape) == 2:
       print_cust(f"train_step_classifier, outD_real.shape: {outD_real.shape}")
-      outD_real = outD_real[:, 1].view(-1)
+      if outD_real.shape[-1] == 2:
+        outD_real = outD_real[:, 1].view(-1)
     print_cust(f"train_step_classifier, after running through classifier_model, outD_real.shape: {outD_real.shape}")
     # otherwise, outD_real is the same shape as I wanted (n_classifiers, input_dim, n_classes).
 
@@ -85,13 +86,19 @@ def train_step_classifier(classifier_model, opt_classifier, criterion, real_labe
       print_cust(f"train_step_classifier, len(outD_real.shape) != 1, outD_real.shape: {outD_real.shape}")
       errD_real = torch.zeros(1).to(classifier_model.device)
       if loss_type == "standalone":
-        errD_real += criterion(outD_real[-1][:, 1], real_labels)
+        if outD_real.shape[-1] == 2:
+          errD_real += criterion(outD_real[-1][:, 1], real_labels)
+        elif outD_real.shape[-1] == 4:
+          errD_real += criterion(outD_real[-1], real_labels)
       elif loss_type == "depthfl":
         for one_output_idx in range(outD_real.shape[0]):
           print_cust(f"train_step_classifier, one_output_idx: {one_output_idx}")
           one_output_preds = outD_real[one_output_idx]
           print_cust(f"train_step_classifier, one_output_preds.shape: {one_output_preds.shape}")
-          errD_real += criterion(one_output_preds[:, 1], real_labels)
+          if outD_real.shape[-1] == 2:
+            errD_real += criterion(one_output_preds[:, 1], real_labels)
+          elif outD_real.shape[-1] == 4:
+            errD_real += criterion(one_output_preds, real_labels)
           for second_output_idx in range(outD_real.shape[0]):
             print_cust(f"train_step_classifier, second_output_idx: {second_output_idx}")
             if second_output_idx == one_output_idx:

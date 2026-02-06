@@ -172,17 +172,17 @@ def QCNN_circuit_dynamic(inputs, conv_params_tuple, pool_params_tuple, final_poo
             qml.CNOT(wires=[wires[0], n_qubits + bp_idx])
           if cheating:
             print_cust(f"QCNN_circuit_dynamic, bp_idx: {bp_idx}, applying cheating measurement on q0")
-            qml.Snapshot(f"p0_bp{bp_idx}", measurement=qml.probs(wires=[0]))
+            qml.Snapshot(f"p0_bp{bp_idx}", measurement=qml.probs(wires=[qubit_idx for qubit_idx in range(n_output_qubits)]))
           if tunn_down:
             print_cust(f"QCNN_circuit_dynamic, doing tunneling down accumulation")
             # ret_probs_list_tunn.append(qml.probs(wires=wires[0]))
-            wires = wires[1:]
+            wires = wires[n_output_qubits:]
 
     # Instead of performing final pooling to a single wire, apply an extra convolution.
     # Here, we assume final_params is formatted like a conv layer
     # that acts on all the remaining wires.
     # Apply another convolution layer on the last qubits.
-    if len(wires) == 1:
+    if len(wires) == 1 and num_layers > 0:
       qml.Rot(final_params[0, 0], final_params[0, 1], final_params[0, 2], wires=wires[0])
     else:
       if num_layers > 0:
@@ -192,7 +192,7 @@ def QCNN_circuit_dynamic(inputs, conv_params_tuple, pool_params_tuple, final_poo
     if num_ancillas == 0:
       if tunn_down:
         print_cust(f"QCNN_circuit_dynamic, returning list of probs from tunneling down")
-        ret_probs_list_tunn = [qml.probs(wires=qubit_idx) for qubit_idx in range(0, len(block_params_remaining))]
+        ret_probs_list_tunn = [qml.probs(wires=[wire_idx for wire_idx in range(qubit_idx * n_output_qubits, (qubit_idx + 1) * n_output_qubits)]) for qubit_idx in range(0, len(block_params_remaining))]
         return ret_probs_list_tunn
       else:
         return qml.probs(wires=wires[:n_output_qubits])

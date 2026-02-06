@@ -395,6 +395,12 @@ def main(argv=None):
 
                             slog.set_glob_loglevel(cfg.get("log_level", "INFO"))
 
+                            criterion_constructor = nn.BCELoss
+                            if len(classes_exper) > 2:
+                                criterion_constructor = QuantumCrossEntropyLoss
+                            
+                            print(f"criterion_constructor: {criterion_constructor}")
+
                             # Run the QFL workflow (same signature you had, but fed by config)
                             data_logs = run_qfl_experiments_parallel_multiprocess(
                                 client_config_exper_parallel,
@@ -433,7 +439,7 @@ def main(argv=None):
                                 lr_gen=lr_gen,
                                 lr_disc=lr_disc,
                                 noise_func=generate_latent_noise,
-                                criterion_func=QuantumCrossEntropyLoss,
+                                criterion_func=criterion_constructor,
                                 targ_data_folder_prefix=cfg["targ_data_folder_prefix"],
                                 gen_data_folder_prefix=cfg["gen_data_folder_prefix"],
                                 device=device,

@@ -89,7 +89,10 @@ def train_step_classifier(classifier_model, opt_classifier, criterion, real_labe
         if outD_real.shape[-1] == 2:
           errD_real += criterion(outD_real[-1][:, 1], real_labels)
         elif outD_real.shape[-1] == 4:
-          errD_real += criterion(outD_real[-1], real_labels)
+          if len(outD_real.shape) > 2:
+            errD_real += criterion(outD_real[-1], real_labels)
+          else:
+            errD_real += criterion(outD_real, real_labels)
       elif loss_type == "depthfl":
         for one_output_idx in range(outD_real.shape[0]):
           print_cust(f"train_step_classifier, one_output_idx: {one_output_idx}")

@@ -17,6 +17,7 @@ from quorus.misc_utils.count_numcli_clitype import count_numcli_clitype
 from quorus.misc_utils.count_qubits_layers import count_qubits_layers
 from quorus.qfl_main.run_qfl_exp_multiproc import run_qfl_experiments_parallel_multiprocess
 from quorus.qgan_model_supp.imggen_funcs.latent_noise_gen import generate_latent_noise
+from quorus.metrics_funcs.torch_lossfns.alt_losses import QuantumCrossEntropyLoss
 import quorus.logging.custom_slog as slog
 
 
@@ -432,7 +433,7 @@ def main(argv=None):
                                 lr_gen=lr_gen,
                                 lr_disc=lr_disc,
                                 noise_func=generate_latent_noise,
-                                criterion_func=nn.BCELoss,
+                                criterion_func=QuantumCrossEntropyLoss,
                                 targ_data_folder_prefix=cfg["targ_data_folder_prefix"],
                                 gen_data_folder_prefix=cfg["gen_data_folder_prefix"],
                                 device=device,

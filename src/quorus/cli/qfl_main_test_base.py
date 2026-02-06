@@ -4,6 +4,7 @@ from quorus.misc_utils.count_numcli_clitype import count_numcli_clitype
 from quorus.misc_utils.count_qubits_layers import count_qubits_layers
 from quorus.qfl_main.run_qfl_exp_multiproc import run_qfl_experiments_parallel_multiprocess
 from quorus.qgan_model_supp.imggen_funcs.latent_noise_gen import generate_latent_noise
+from quorus.metrics_funcs.torch_lossfns.alt_losses import QuantumCrossEntropyLoss
 import torch.nn as nn
 
 
@@ -331,7 +332,7 @@ def main(argv=None):
                   data_logs = run_qfl_experiments_parallel_multiprocess(client_config_exper_parallel, classes=classes_exper, n_samples=n_samples_exper, dataset_type=dataset_type_exper, agg_strategy="fedavg_circ", test_frac=((n_samples_exper - n_train_samples_exper)/n_samples_exper), val_frac=0.0, random_state=random_state, pool_in=True,
                                           local_batch_size=local_batch_size, local_lr=0.01, shots=1024, debug=True, save_pkl=True, mask_grads=True, init_client_data_dict=data_logs_prev, qubits_and_layers_to_add_block_params={10: [(10, 2)], 11: [(10, 2), (10, 1)], 12: [(10, 2), (10, 1), (10, 1)], 13: [(10, 2), (10, 1), (10, 1), (10, 1)], 14: [(10, 1), (10, 1), (10, 1), (10, 1), (10, 1)]},
                                                           train_models_parallel=train_models_parallel, same_init=True, feature_skew=0.0, label_skew=None, local_pca=local_pca, do_lda=False, feat_sel_type="top", amp_embed=amp_embed, feat_ordering="same", morepers=morepers, custom_debug=True,
-                                                          shared_pca=shared_pca, heirarchical_train=heirarchical_train, generative=False, use_torch=True, fed_pca_mocked=True, lr_gen=lr_gen, lr_disc=lr_disc, noise_func=generate_latent_noise, criterion_func=nn.BCELoss,
+                                                          shared_pca=shared_pca, heirarchical_train=heirarchical_train, generative=False, use_torch=True, fed_pca_mocked=True, lr_gen=lr_gen, lr_disc=lr_disc, noise_func=generate_latent_noise, criterion_func=QuantumCrossEntropyLoss,
                                                               targ_data_folder_prefix="testing_gen_imgs", gen_data_folder_prefix="qgan_gen_imgs", device=device, fid_batch_size=None, max_workers=max_workers, mp_ctx=mp_ctx, log_data_folder=log_data_folder,
                                                                           initial_supp_params=initial_supp_params, optim_type=optim_type, gen_betas=gen_betas, disc_betas=disc_betas, resc_invpca=resc_invpca, compute_fid=compute_fid, is_qcnn=is_qcnn,
                                                                           pennylane_interface=pennylane_interface, opt_layers=opt_layers, alt_zeros_init=alt_zeros_init, multiclassifier_type=multiclassifier_type, testacc_rd_cutoff=testacc_rd_cutoff,

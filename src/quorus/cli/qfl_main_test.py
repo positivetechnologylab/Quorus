@@ -306,6 +306,15 @@ def main(argv=None):
                     max_workers = os.cpu_count()
                     mp_ctx = mp.get_context(cfg.get("mp_start_method", "spawn"))
 
+                    # label_skew is None (IID) or 0.5 (Non-IID; Dirichelet(0.5))
+                    label_skew = cfg["label_skew"]
+                    if label_skew is None:
+                        label_skew_str = ""
+                    else:
+                        label_skew_str = f"_ni_{label_skew}"
+                    
+                    print(f"label_skew_str: {label_skew_str}")
+
                     # Build log folder name to match your original scheme
                     log_data_folder = (
                         f"{IMG_PATH}/data_logs_{dataset_type_exper}_classes_{'_'.join(classes_exper)}"
@@ -313,7 +322,7 @@ def main(argv=None):
                         f"_qfl_gen_{num_total_rounds_glob}rounds_le_{local_epochs}_bs_{local_batch_size}"
                         f"_opt_{optim_type}_mpd_mlt_lg_{lr_gen}_ld_{lr_disc}_dqdm_ba_sp_qcnn_{is_qcnn}"
                         f"_ba_sm_ae_{amp_embed}_dr_nce_mc_{multiclassifier_type}_mp_{train_models_parallel}"
-                        f"_tclip_{morepers}_{random_state}_{ansatz_type}_ldd_{lr_disc_decay}_2_10l_nos"
+                        f"_tclip_{morepers}_{random_state}_{ansatz_type}_ldd_{lr_disc_decay}_2_10l_nos{label_skew_str}"
                     )
 
                     if not os.path.exists(log_data_folder):
@@ -347,14 +356,14 @@ def main(argv=None):
                             default_prev_data = (
                                 f"{base_init_dir}/data_logs_n_samples_{n_samples_exper}"
                                 f"_dataset_type_{dataset_type_exper}_classes_{'_'.join(classes_exper)}"
-                                f"_train_models_parallel_{train_models_parallel}_feature_skew_0.0_label_skew_None"
+                                f"_train_models_parallel_{train_models_parallel}_feature_skew_0.0_label_skew_{label_skew}"
                                 f"_local_pca_{local_pca}_shared_pca_{shared_pca}_gen_False_qcnn_{is_qcnn}"
                                 f"_{random_state}.pkl"
                             )
                             default_prev_params = (
                                 f"{base_init_dir}/client_params_dict_n_samples_{n_samples_exper}"
                                 f"_dataset_type_{dataset_type_exper}_classes_{'_'.join(classes_exper)}"
-                                f"_train_models_parallel_{train_models_parallel}_feature_skew_0.0_label_skew_None"
+                                f"_train_models_parallel_{train_models_parallel}_feature_skew_0.0_label_skew_{label_skew}"
                                 f"_local_pca_{local_pca}_shared_pca_{shared_pca}_gen_False_qcnn_{is_qcnn}"
                                 f"_{random_state}.pkl"
                             )

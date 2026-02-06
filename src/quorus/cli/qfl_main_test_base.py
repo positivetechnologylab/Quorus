@@ -221,9 +221,18 @@ def main(argv=None):
           ansatz_type = qubits_and_layer_types_block_params[list(qubits_and_layer_types_block_params.keys())[0]][0]
           print(f"ansatz_type: {ansatz_type}")
 
+          # label_skew is None (IID) or 0.5 (Non-IID; Dirichelet(0.5))
+          label_skew = None
+          if label_skew is None:
+              label_skew_str = ""
+          else:
+              label_skew_str = f"_ni_{label_skew}"
+          
+          print(f"label_skew_str: {label_skew_str}")
+
           # random_state = 12
           # Specify the log folder where results should be stored. This string is a function of the previous configurations, in string format.
-          log_data_folder = f"{IMG_PATH}/data_logs_{dataset_type_exper}_classes_{'_'.join(classes_exper)}_n_samples_{n_samples_exper}_n_train_{n_train_samples_exper}_qfl_gen_{num_total_rounds_glob}rounds_le_{local_epochs}_bs_{local_batch_size}_opt_{optim_type}_mpd_mlt_lg_{lr_gen}_ld_{lr_disc}_dqdm_ba_sp_qcnn_{is_qcnn}_ba_sm_ae_{amp_embed}_dr_nce_mc_{multiclassifier_type}_mp_{train_models_parallel}_tclip_{morepers}_{random_state}_{ansatz_type}_ldd_{lr_disc_decay}_2_10l_nos"
+          log_data_folder = f"{IMG_PATH}/data_logs_{dataset_type_exper}_classes_{'_'.join(classes_exper)}_n_samples_{n_samples_exper}_n_train_{n_train_samples_exper}_qfl_gen_{num_total_rounds_glob}rounds_le_{local_epochs}_bs_{local_batch_size}_opt_{optim_type}_mpd_mlt_lg_{lr_gen}_ld_{lr_disc}_dqdm_ba_sp_qcnn_{is_qcnn}_ba_sm_ae_{amp_embed}_dr_nce_mc_{multiclassifier_type}_mp_{train_models_parallel}_tclip_{morepers}_{random_state}_{ansatz_type}_ldd_{lr_disc_decay}_2_10l_nos{label_skew_str}"
 
 
 
@@ -277,13 +286,13 @@ def main(argv=None):
                   data_logs_prev = None
                   initial_supp_params = None
                   # TODO, public code: have a boolean indicating whether or not to use previous data.
-                  with open(f"{IMG_PATH}/initial_configs_{n_clients_tot}cli_{datapoints_per_cli}tr_{n_samples_exper - (datapoints_per_cli * n_clients_tot)}test_{qubits_layers_str}/data_logs_n_samples_{n_samples_exper}_dataset_type_{dataset_type_exper}_classes_{'_'.join(classes_exper)}_train_models_parallel_{train_models_parallel}_feature_skew_0.0_label_skew_None_local_pca_{local_pca}_shared_pca_{shared_pca}_gen_False_qcnn_{is_qcnn}_{random_state}.pkl", "rb") as file:
+                  with open(f"{IMG_PATH}/initial_configs_{n_clients_tot}cli_{datapoints_per_cli}tr_{n_samples_exper - (datapoints_per_cli * n_clients_tot)}test_{qubits_layers_str}/data_logs_n_samples_{n_samples_exper}_dataset_type_{dataset_type_exper}_classes_{'_'.join(classes_exper)}_train_models_parallel_{train_models_parallel}_feature_skew_0.0_label_skew_{label_skew}_local_pca_{local_pca}_shared_pca_{shared_pca}_gen_False_qcnn_{is_qcnn}_{random_state}.pkl", "rb") as file:
                     data_logs_prev = pickle.load(file)
                   print(f"data_logs_prev.keys(): {data_logs_prev.keys()}")
                   print(f"data_logs_prev['clients_data_dict'].keys(): {data_logs_prev['clients_data_dict'].keys()}")
                   print(f"data_logs_prev: {data_logs_prev}")
                   # TODO, public code: have a boolean indicating whether or not to use previous parameters.
-                  with open(f"{IMG_PATH}/initial_configs_{n_clients_tot}cli_{datapoints_per_cli}tr_{n_samples_exper - (datapoints_per_cli * n_clients_tot)}test_{qubits_layers_str}/client_params_dict_n_samples_{n_samples_exper}_dataset_type_{dataset_type_exper}_classes_{'_'.join(classes_exper)}_train_models_parallel_{train_models_parallel}_feature_skew_0.0_label_skew_None_local_pca_{local_pca}_shared_pca_{shared_pca}_gen_False_qcnn_{is_qcnn}_{random_state}.pkl", "rb") as file:
+                  with open(f"{IMG_PATH}/initial_configs_{n_clients_tot}cli_{datapoints_per_cli}tr_{n_samples_exper - (datapoints_per_cli * n_clients_tot)}test_{qubits_layers_str}/client_params_dict_n_samples_{n_samples_exper}_dataset_type_{dataset_type_exper}_classes_{'_'.join(classes_exper)}_train_models_parallel_{train_models_parallel}_feature_skew_0.0_label_skew_{label_skew}_local_pca_{local_pca}_shared_pca_{shared_pca}_gen_False_qcnn_{is_qcnn}_{random_state}.pkl", "rb") as file:
                     initial_supp_params = pickle.load(file)
                   print(f"initial_supp_params.keys(): {initial_supp_params.keys()}")
                   print(f"initial_supp_params: {initial_supp_params}")
@@ -337,7 +346,7 @@ def main(argv=None):
                   # Run the QFL workflow and obtain the resulting metrics, in data_logs.
                   data_logs = run_qfl_experiments_parallel_multiprocess(client_config_exper_parallel, classes=classes_exper, n_samples=n_samples_exper, dataset_type=dataset_type_exper, agg_strategy="fedavg_circ", test_frac=((n_samples_exper - n_train_samples_exper)/n_samples_exper), val_frac=0.0, random_state=random_state, pool_in=True,
                                           local_batch_size=local_batch_size, local_lr=0.01, shots=1024, debug=True, save_pkl=True, mask_grads=True, init_client_data_dict=data_logs_prev, qubits_and_layers_to_add_block_params={10: [(10, 2)], 11: [(10, 2), (10, 1)], 12: [(10, 2), (10, 1), (10, 1)], 13: [(10, 2), (10, 1), (10, 1), (10, 1)], 14: [(10, 1), (10, 1), (10, 1), (10, 1), (10, 1)]},
-                                                          train_models_parallel=train_models_parallel, same_init=True, feature_skew=0.0, label_skew=None, local_pca=local_pca, do_lda=False, feat_sel_type="top", amp_embed=amp_embed, feat_ordering="same", morepers=morepers, custom_debug=True,
+                                                          train_models_parallel=train_models_parallel, same_init=True, feature_skew=0.0, label_skew=label_skew, local_pca=local_pca, do_lda=False, feat_sel_type="top", amp_embed=amp_embed, feat_ordering="same", morepers=morepers, custom_debug=True,
                                                           shared_pca=shared_pca, heirarchical_train=heirarchical_train, generative=False, use_torch=True, fed_pca_mocked=True, lr_gen=lr_gen, lr_disc=lr_disc, noise_func=generate_latent_noise, criterion_func=criterion_constructor,
                                                               targ_data_folder_prefix="testing_gen_imgs", gen_data_folder_prefix="qgan_gen_imgs", device=device, fid_batch_size=None, max_workers=max_workers, mp_ctx=mp_ctx, log_data_folder=log_data_folder,
                                                                           initial_supp_params=initial_supp_params, optim_type=optim_type, gen_betas=gen_betas, disc_betas=disc_betas, resc_invpca=resc_invpca, compute_fid=compute_fid, is_qcnn=is_qcnn,

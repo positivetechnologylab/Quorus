@@ -63,7 +63,10 @@ def load_dataset(dataset_type="mnist", classes=["4", "9"], n_samples=1000, num_f
         print_cust("load_dataset, is cifar10")
         X, y = load_cifar10(classes, n_samples=n_samples)
         # CIFAR-10 images are higher-dimensional; applying PCA is recommended.
-        X_angles = angle_encode_data(X, y=y, n_components=num_feats, do_pca=do_pca, do_lda=do_lda)
+        if keep_orig_imgs:
+          X_angles = X
+        else:
+          X_angles = angle_encode_data(X, y=y, n_components=num_feats, do_pca=do_pca, do_lda=do_lda, custom_debug=custom_debug)
         return X_angles, y.astype(int)
 
     elif dataset_type == "synthetic":
